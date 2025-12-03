@@ -57,6 +57,10 @@ Lib/
 Scripts/
 pyvenv.cfg
 
+# Local config (private paths)
+config_local.py
+app/config_local.py
+
 # -----------------------------------------------------------------------------
 # GENERATED FILES
 # -----------------------------------------------------------------------------

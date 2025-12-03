@@ -77,7 +77,8 @@ datasets/FLAME/
 
 ### Step 3: Create data.yaml
 ```yaml
-path: C:/Users/sam/Downloads/Project swarm/datasets/FLAME
+# Update path to your actual project location
+path: <YOUR_PROJECT_PATH>/datasets/FLAME
 train: train/images
 val: val/images
 nc: 2

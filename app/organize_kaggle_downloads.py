@@ -2,7 +2,7 @@
 Organize Kaggle Fire Detection Downloads
 Run this AFTER downloads complete to prepare data for training
 
-Expected downloads in C:/Users/sam/Downloads/:
+Expected downloads in your Downloads folder:
 - archive.zip
 - archive (1).zip  
 - archive (2).zip
@@ -16,10 +16,10 @@ print("=" * 70)
 print("🔥 KAGGLE FIRE DATASET ORGANIZER")
 print("=" * 70)
 
-# Paths
-DOWNLOADS = Path("C:/Users/sam/Downloads")
-PROJECT = Path("C:/Users/sam/Downloads/Project swarm")
-DATASETS = PROJECT / "datasets"
+# Paths - UPDATE THESE TO MATCH YOUR SYSTEM
+DOWNLOADS = Path.home() / "Downloads"  # Auto-detects user's Downloads folder
+PROJECT = Path(__file__).parent.parent  # Project root (one level up from app/)
+DATASETS = PROJECT / "data" / "datasets"  # Assumes data symlink exists
 KAGGLE_DIR = DATASETS / "Kaggle_Combined"
 
 # Create output directory

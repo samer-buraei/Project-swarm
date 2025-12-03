@@ -223,14 +223,32 @@ opencv-python>=4.8.0
 
 ## 💾 Data & Models (Not on GitHub)
 
-Training data and large models are stored separately:
-- **Location:** `fire-drone-data/` (sibling folder)
-- **Size:** ~141 GB
-- **Contents:** Datasets, pretrained models, training outputs
+Training data and large models are stored separately (~141 GB).
 
-To link for local development (run as Admin):
+### Option 1: Symlink (Recommended)
 ```powershell
-New-Item -ItemType Junction -Path ".\data" -Target "C:\Users\sam\Downloads\fire-drone-data"
+# Run as Admin - creates symlink to your data folder
+New-Item -ItemType Junction -Path ".\data" -Target "D:\your-path\fire-drone-data"
+```
+
+### Option 2: Config File (Alternative)
+```powershell
+# Copy the example config
+cp app/config_local.example.py app/config_local.py
+
+# Edit with your paths
+notepad app/config_local.py
+```
+
+In `config_local.py`:
+```python
+DATA_PATH = "D:/your-path/fire-drone-data"
+```
+
+### Verify Setup
+```bash
+cd app
+python config.py  # Shows path status
 ```
 
 ---

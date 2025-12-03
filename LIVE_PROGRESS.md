@@ -43,7 +43,7 @@ Project swarm/
 
 ### fire-drone-data/ (Local Only - 141 GB)
 ```
-C:\Users\sam\Downloads\fire-drone-data\
+<YOUR_PATH>/fire-drone-data/
 ├── datasets/
 │   ├── Combined/           # D-Fire (21K images)
 │   ├── Kaggle_Combined/    # Kaggle (221K images)
@@ -101,7 +101,7 @@ C:\Users\sam\Downloads\fire-drone-data\
 
 ### 1. Initialize Git & Push to GitHub
 ```powershell
-cd "C:\Users\sam\Downloads\Project swarm"
+cd "<YOUR_PROJECT_PATH>/Project-swarm"
 git init
 git add .
 git commit -m "Initial commit: Fire Detection Drone Swarm"
@@ -112,7 +112,8 @@ git push -u origin main
 ### 2. Link Data Folder (for local development)
 ```powershell
 # Run as Administrator - creates symlink
-New-Item -ItemType Junction -Path "C:\Users\sam\Downloads\Project swarm\data" -Target "C:\Users\sam\Downloads\fire-drone-data"
+# Replace paths with your actual locations
+New-Item -ItemType Junction -Path "<PROJECT_PATH>/data" -Target "<DATA_PATH>/fire-drone-data"
 ```
 
 ### 3. Test Fire Detection

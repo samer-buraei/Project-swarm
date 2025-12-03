@@ -80,28 +80,28 @@ fire-drone-data/
 
 ### Step 1: Create New Folder Structure
 ```powershell
-# Create fire-drone-data folder (same level as Project swarm)
-New-Item -ItemType Directory -Path "C:\Users\sam\Downloads\fire-drone-data" -Force
+# Create fire-drone-data folder (same level as project)
+New-Item -ItemType Directory -Path "<YOUR_PATH>/fire-drone-data" -Force
 
 # Move large data
-Move-Item "data\datasets" "C:\Users\sam\Downloads\fire-drone-data\datasets"
-Move-Item "data\DFireDataset" "C:\Users\sam\Downloads\fire-drone-data\DFireDataset"
-Move-Item "data\models" "C:\Users\sam\Downloads\fire-drone-data\models"
-Move-Item "data\runs" "C:\Users\sam\Downloads\fire-drone-data\runs"
-Move-Item "data\FLAME_Dataset" "C:\Users\sam\Downloads\fire-drone-data\FLAME_Dataset"
+Move-Item "data\datasets" "<YOUR_PATH>/fire-drone-data/datasets"
+Move-Item "data\DFireDataset" "<YOUR_PATH>/fire-drone-data/DFireDataset"
+Move-Item "data\models" "<YOUR_PATH>/fire-drone-data/models"
+Move-Item "data\runs" "<YOUR_PATH>/fire-drone-data/runs"
+Move-Item "data\FLAME_Dataset" "<YOUR_PATH>/fire-drone-data/FLAME_Dataset"
 ```
 
 ### Step 2: Rename Main Project
 ```powershell
 # Rename to clean name
-Rename-Item "C:\Users\sam\Downloads\Project swarm" "C:\Users\sam\Downloads\fire-drone-swarm"
+Rename-Item "<YOUR_PATH>/Project-swarm" "<YOUR_PATH>/fire-drone-swarm"
 ```
 
 ### Step 3: Create Symlink (Optional)
 ```powershell
 # Link data folder into project (for scripts that expect data/)
 # Run as Administrator
-New-Item -ItemType Junction -Path "C:\Users\sam\Downloads\fire-drone-swarm\data" -Target "C:\Users\sam\Downloads\fire-drone-data"
+New-Item -ItemType Junction -Path "<YOUR_PATH>/fire-drone-swarm/data" -Target "<YOUR_PATH>/fire-drone-data"
 ```
 
 ### Step 4: Clean Up Project
@@ -169,8 +169,8 @@ model_path = "data/models/pretrained/yolov10_fire_smoke.pt"
 # After (with symlink, same path works)
 model_path = "data/models/pretrained/yolov10_fire_smoke.pt"
 
-# OR (absolute path)
-model_path = "C:/Users/sam/Downloads/fire-drone-data/models/pretrained/yolov10_fire_smoke.pt"
+# OR (absolute path - replace with your path)
+model_path = "<YOUR_PATH>/fire-drone-data/models/pretrained/yolov10_fire_smoke.pt"
 ```
 
 ---
