@@ -15,6 +15,9 @@ import pydeck as pdk
 import pandas as pd
 import time
 import math
+import json
+import glob
+import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from collections import deque
@@ -80,6 +83,14 @@ if 'trails' not in st.session_state:
     st.session_state.trails = {d['id']: deque(maxlen=200) for d in DRONE_CONFIG}
 if 'selected_drone' not in st.session_state:
     st.session_state.selected_drone = "D1"
+if 'mission' not in st.session_state:
+    st.session_state.mission = None
+if 'mission_waypoints' not in st.session_state:
+    st.session_state.mission_waypoints = []
+if 'mission_executing' not in st.session_state:
+    st.session_state.mission_executing = False
+if 'current_waypoint_idx' not in st.session_state:
+    st.session_state.current_waypoint_idx = {}
 
 @dataclass
 class DroneState:
@@ -106,10 +117,10 @@ def connect_drone(port: int):
         master = mavutil.mavlink_connection(f'tcp:127.0.0.1:{port}', timeout=5)
         msg = master.recv_match(type='HEARTBEAT', blocking=True, timeout=5)
         if msg:
+            # Request ALL data streams for full telemetry
             master.mav.request_data_stream_send(
                 master.target_system, master.target_component,
-                6, 10, 1  # Position stream
-            )
+                mavutil.mavlink.MAV_DATA_STREAM_ALL, 10, 1)
             return master
     except:
         pass
@@ -124,28 +135,37 @@ def get_telemetry(master, drone: DroneState) -> DroneState:
     try:
         from pymavlink import mavutil
         
-        # Position
+        # ArduCopter mode map (complete)
+        COPTER_MODES = {
+            0: 'STABILIZE', 1: 'ACRO', 2: 'ALT_HOLD', 3: 'AUTO',
+            4: 'GUIDED', 5: 'LOITER', 6: 'RTL', 7: 'CIRCLE',
+            9: 'LAND', 11: 'DRIFT', 13: 'SPORT', 14: 'FLIP',
+            15: 'AUTOTUNE', 16: 'POSHOLD', 17: 'BRAKE', 18: 'THROW',
+            19: 'AVOID_ADSB', 20: 'GUIDED_NOGPS', 21: 'SMART_RTL',
+            22: 'FLOWHOLD', 23: 'FOLLOW', 24: 'ZIGZAG', 25: 'SYSTEMID',
+            26: 'AUTOROTATE', 27: 'AUTO_RTL'
+        }
+        
+        # Position and velocity
         msg = master.recv_match(type='GLOBAL_POSITION_INT', blocking=True, timeout=0.3)
         if msg:
             drone.lat = msg.lat / 1e7
             drone.lon = msg.lon / 1e7
             drone.alt = msg.relative_alt / 1000
             drone.heading = msg.hdg / 100 if msg.hdg else 0
+            # Calculate ground speed from velocity components
+            vx = msg.vx / 100  # cm/s to m/s
+            vy = msg.vy / 100
+            drone.speed = math.sqrt(vx*vx + vy*vy)
         
-        # Speed
-        msg = master.recv_match(type='VFR_HUD', blocking=False)
-        if msg:
-            drone.speed = msg.groundspeed
-        
-        # Mode/Armed
+        # Heartbeat for mode/armed
         msg = master.recv_match(type='HEARTBEAT', blocking=False)
         if msg:
             drone.armed = bool(msg.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED)
-            mode_map = {0: 'STAB', 3: 'AUTO', 4: 'GUIDED', 5: 'LOITER', 6: 'RTL', 9: 'LAND'}
-            drone.mode = mode_map.get(msg.custom_mode, str(msg.custom_mode))
+            drone.mode = COPTER_MODES.get(msg.custom_mode, f"MODE_{msg.custom_mode}")
         
         drone.connected = True
-    except:
+    except Exception as e:
         drone.connected = False
     
     return drone
@@ -194,14 +214,31 @@ def send_command(master, cmd: str, **kwargs):
 
 # ============== MAP ==============
 
-def create_fleet_map(fleet: Dict[str, DroneState], trails: Dict):
-    """Create map with all drones"""
+def create_fleet_map(fleet: Dict[str, DroneState], trails: Dict, waypoints: List = None):
+    """Create map with all drones and mission waypoints"""
     layers = []
     
     # Base
     base_df = pd.DataFrame([{'lat': BASE_LAT, 'lon': BASE_LON, 'color': [0, 255, 136, 200]}])
     layers.append(pdk.Layer('ScatterplotLayer', data=base_df,
         get_position=['lon', 'lat'], get_fill_color='color', get_radius=60))
+    
+    # Mission waypoints
+    if waypoints and len(waypoints) > 0:
+        # Waypoint markers
+        wp_df = pd.DataFrame([{
+            'lat': wp[0], 'lon': wp[1], 
+            'color': [255, 165, 0, 180]  # Orange
+        } for wp in waypoints])
+        layers.append(pdk.Layer('ScatterplotLayer', data=wp_df,
+            get_position=['lon', 'lat'], get_fill_color='color', get_radius=8))
+        
+        # Mission path
+        if len(waypoints) > 1:
+            path = [[wp[1], wp[0]] for wp in waypoints]
+            path_df = pd.DataFrame([{'path': path, 'color': [255, 165, 0, 150]}])
+            layers.append(pdk.Layer('PathLayer', data=path_df,
+                get_path='path', get_color='color', width_scale=3, width_min_pixels=2))
     
     # Trails
     for drone_id, trail in trails.items():
@@ -333,8 +370,12 @@ with col_left:
 with col_map:
     st.markdown("### 🗺️ Fleet Map")
     
-    # Create map
-    fleet_map = create_fleet_map(st.session_state.fleet, st.session_state.trails)
+    # Create map with mission waypoints
+    fleet_map = create_fleet_map(
+        st.session_state.fleet, 
+        st.session_state.trails,
+        st.session_state.mission_waypoints
+    )
     st.pydeck_chart(fleet_map, use_container_width=True, height=450)
     
     # Quick fleet commands
@@ -421,6 +462,74 @@ with col_right:
             send_command(master, "GOTO", lat=goto_lat, lon=goto_lon, alt=50)
     else:
         st.info(f"Connect {selected_id} first")
+    
+    # ============== MISSION LOADER ==============
+    st.markdown("---")
+    st.markdown("### 📋 Mission Control")
+    
+    # Find mission files
+    mission_files = glob.glob("*.json")
+    mission_files = [f for f in mission_files if "drone_state" not in f and "fleet_command" not in f]
+    
+    if mission_files:
+        selected_mission = st.selectbox("Select Mission", ["None"] + mission_files)
+        
+        if selected_mission != "None":
+            # Load mission button
+            if st.button("📂 Load Mission", use_container_width=True):
+                try:
+                    with open(selected_mission, 'r') as f:
+                        mission_data = json.load(f)
+                    st.session_state.mission = mission_data
+                    
+                    # Extract waypoints
+                    if 'waypoints' in mission_data:
+                        st.session_state.mission_waypoints = mission_data['waypoints']
+                    st.success(f"✅ Loaded {len(st.session_state.mission_waypoints)} waypoints!")
+                except Exception as e:
+                    st.error(f"Error: {e}")
+            
+            # Show mission info
+            if st.session_state.mission:
+                st.info(f"📍 **{len(st.session_state.mission_waypoints)} waypoints** loaded")
+                
+                # Execute mission
+                if st.button("🚀 EXECUTE MISSION", use_container_width=True, type="primary"):
+                    if st.session_state.mission_waypoints:
+                        st.session_state.mission_executing = True
+                        
+                        # Distribute waypoints among connected drones
+                        connected_drones = [d for d in st.session_state.fleet.values() if d.connected]
+                        waypoints = st.session_state.mission_waypoints
+                        
+                        if connected_drones:
+                            # Simple: assign waypoints round-robin to drones
+                            altitude = st.session_state.mission.get('altitude', 50)
+                            
+                            for i, wp in enumerate(waypoints[:len(connected_drones)]):
+                                drone = connected_drones[i % len(connected_drones)]
+                                master = st.session_state.connections.get(drone.id)
+                                if master:
+                                    # ARM and send to first waypoint
+                                    send_command(master, "ARM")
+                                    time.sleep(0.3)
+                                    send_command(master, "TAKEOFF", alt=altitude)
+                                    time.sleep(1)
+                                    send_command(master, "GOTO", lat=wp[0], lon=wp[1], alt=altitude)
+                            
+                            st.success(f"🚁 Mission started! {len(connected_drones)} drones dispatched")
+                        else:
+                            st.error("No drones connected!")
+                
+                # Clear mission
+                if st.button("🗑️ Clear Mission", use_container_width=True):
+                    st.session_state.mission = None
+                    st.session_state.mission_waypoints = []
+                    st.session_state.mission_executing = False
+    else:
+        st.info("💡 Create a mission in Mission Planner (port 8507)")
+        if st.button("🗺️ Open Mission Planner"):
+            st.markdown("[Open Mission Planner](http://localhost:8507)")
 
 # Footer
 st.markdown("---")

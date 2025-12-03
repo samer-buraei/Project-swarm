@@ -1,152 +1,202 @@
-# 🔥 LIVE PROGRESS DASHBOARD
-**Updated:** December 3, 2025
+# 🔥 FIRE DRONE SWARM - LIVE STATUS
+**Last Updated:** December 3, 2025
 
 ---
 
-## ✅ PROJECT REORGANIZATION COMPLETE!
+## ✅ CURRENT STATE: FULLY OPERATIONAL
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  🎉 SUCCESS: Project split into GitHub-ready structure!             │
+│  🎉 SYSTEM STATUS: WORKING                                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  📁 Project swarm (GitHub-ready)     →  19.8 MB ✅                  │
-│  📁 fire-drone-data (Local storage)  →  141 GB                      │
+│  ✅ Fleet Control Dashboard     - 5 SITL drones connected           │
+│  ✅ Mission Planner             - Draw patrol grids on map          │
+│  ✅ Mission Integration         - Load & execute patrol patterns    │
+│  ✅ Fire Detection Models       - 6 models (best: 85% mAP)          │
+│  ✅ GitHub Repository           - Clean, no personal data           │
 │                                                                     │
-│  BEFORE: 141+ GB (cannot upload to GitHub)                         │
-│  AFTER:  19.8 MB (ready for GitHub!) 🚀                            │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 NEW PROJECT STRUCTURE
+## 🚀 QUICK START (5 Minutes)
 
-### Project swarm/ (GitHub Repo - 19.8 MB)
-```
-Project swarm/
-├── app/                    # Core application code (50+ scripts)
-│   ├── simulation.py       # Drone simulation
-│   ├── dashboard.py        # Main dashboard  
-│   ├── fire_detector*.py   # Fire detection
-│   └── ...
-├── docs/                   # Documentation (24 files)
-├── scripts/                # Utility scripts
-├── models/                 # Base model only
-│   └── yolov8n.pt         # 6 MB base model
-├── P2Pro-Viewer/          # Thermal camera driver
-├── .gitignore             # Excludes large files
-├── README.md
-├── requirements.txt
-└── QUICKSTART.md
-```
-
-### fire-drone-data/ (Local Only - 141 GB)
-```
-<YOUR_PATH>/fire-drone-data/
-├── datasets/
-│   ├── Combined/           # D-Fire (21K images)
-│   ├── Kaggle_Combined/    # Kaggle (221K images)
-│   └── FLAME/              # (pending download)
-├── DFireDataset/           # Original D-Fire
-├── models/
-│   ├── pretrained/         # 6 pretrained models
-│   │   ├── yolov10_fire_smoke.pt (85% mAP) ⭐
-│   │   ├── yolov5s_dfire.pt (80% mAP)
-│   │   └── ...
-│   └── backup_before_kaggle/
-├── runs/                   # Training outputs
-│   └── train/
-│       └── fire_yolov8n/   # D-Fire trained (72% mAP)
-└── weights/
-```
-
----
-
-## ✅ COMPLETED TASKS
-
-| Task | Status | Details |
-|------|--------|---------|
-| D-Fire Training | ✅ **72% mAP** | 20 epochs, 17.4 hours |
-| Kaggle Downloads | ✅ **44 GB** | 221,940 images |
-| Dataset Organization | ✅ | YOLO format ready |
-| Pretrained Models | ✅ **6 models** | Best: 85% mAP |
-| Backup System | ✅ | All models backed up |
-| GPU Setup | ✅ | RTX 4090 working |
-| Disk Cleanup | ✅ **41.6 GB freed** | Now 57.9 GB free |
-| **Project Reorganization** | ✅ **Complete** | 141 GB → 19.8 MB |
-
----
-
-## 📊 MODEL INVENTORY
-
-### In fire-drone-data/models/pretrained/:
-| Model | Size | Accuracy | Pi-Ready? |
-|-------|------|----------|-----------|
-| **yolov10_fire_smoke.pt** | 61 MB | **85% mAP** ⭐ | ❌ |
-| **yolov5s_dfire.pt** | 14 MB | **80% mAP** | ✅ |
-| **dfire_trained_72pct.pt** | 5.9 MB | **72% mAP** | ✅ |
-| yolov10n_forest_fire.pt | 5.5 MB | Good | ✅ |
-| yolov8s_forest_fire.pt | 22 MB | Good | ⚠️ |
-| yolov8n.pt | 6.2 MB | Base | ✅ |
-
-### In Project swarm/models/:
-| Model | Size | Purpose |
-|-------|------|---------|
-| yolov8n.pt | 6 MB | Base model for GitHub |
-
----
-
-## 🚀 NEXT STEPS
-
-### 1. Initialize Git & Push to GitHub
-```powershell
-cd "<YOUR_PROJECT_PATH>/Project-swarm"
-git init
-git add .
-git commit -m "Initial commit: Fire Detection Drone Swarm"
-git remote add origin https://github.com/YOUR_USERNAME/fire-drone-swarm.git
-git push -u origin main
-```
-
-### 2. Link Data Folder (for local development)
-```powershell
-# Run as Administrator - creates symlink
-# Replace paths with your actual locations
-New-Item -ItemType Junction -Path "<PROJECT_PATH>/data" -Target "<DATA_PATH>/fire-drone-data"
-```
-
-### 3. Test Fire Detection
+### Terminal 1: Launch 5 Simulated Drones
 ```powershell
 cd app
-py fire_detector_unified.py --model ../models/yolov8n.pt
+py launch_fleet.py
+```
+
+### Terminal 2: Start Fleet Control Dashboard
+```powershell
+cd app
+streamlit run dashboard_fleet_real.py --server.port 8506
+```
+
+### Terminal 3: Start Mission Planner (Optional)
+```powershell
+cd app
+streamlit run dashboard_mission.py --server.port 8507
+```
+
+### Open Browser
+- **Fleet Control:** http://localhost:8506
+- **Mission Planner:** http://localhost:8507
+
+---
+
+## 📊 DASHBOARDS
+
+| Port | Dashboard | Purpose |
+|------|-----------|---------|
+| 8506 | **Fleet Control** | Control 5 drones, execute missions |
+| 8507 | **Mission Planner** | Draw patrol areas, generate grids |
+
+---
+
+## 🚁 WHAT WORKS NOW
+
+### Fleet Control (port 8506)
+- ✅ Connect to 5 SITL drones via MAVLink
+- ✅ Real-time telemetry (altitude, mode, speed, heading)
+- ✅ Fleet commands: ARM ALL, TAKEOFF ALL, RTL ALL, DISARM ALL
+- ✅ Individual drone control
+- ✅ 3D map with altitude columns and flight trails
+- ✅ **Mission Control: Load & execute patrol patterns**
+
+### Mission Planner (port 8507)
+- ✅ Satellite map view
+- ✅ Draw search areas (rectangle or polygon)
+- ✅ Auto-generate grid waypoints
+- ✅ Configure altitude, grid spacing, angle
+- ✅ Export missions to JSON
+- ✅ **Missions load directly into Fleet Control**
+
+### Fire Detection
+- ✅ 6 pretrained models available
+- ✅ Best model: 85% mAP (yolov10_fire_smoke.pt)
+- ✅ Pi-ready models: 5.5-14 MB
+- ✅ Thermal simulation mode
+
+---
+
+## 📁 PROJECT STRUCTURE
+
+```
+Project swarm/                    # GitHub Repo (~8 MB)
+├── app/                          # Core application (50+ scripts)
+│   ├── launch_fleet.py           # Start 5 SITL drones
+│   ├── dashboard_fleet_real.py   # Fleet Control UI
+│   ├── dashboard_mission.py      # Mission Planner UI
+│   ├── fire_detector_unified.py  # Fire detection
+│   ├── config.py                 # Central configuration
+│   ├── config_local.example.py   # Template for private paths
+│   └── ...
+├── docs/                         # Documentation (24 files)
+├── models/                       # Base model only
+│   └── yolov8n.pt               # 6 MB base model
+├── scripts/                      # Utility scripts
+├── P2Pro-Viewer/                # Thermal camera driver
+├── data/ → fire-drone-data      # Symlink to large data
+├── .gitignore
+├── README.md
+└── requirements.txt
+
+fire-drone-data/                  # Local Only (~141 GB)
+├── datasets/                     # Training datasets
+│   ├── Combined/                # D-Fire (21K images)
+│   ├── Kaggle_Combined/         # Kaggle (221K images)
+│   └── FLAME/                   # Aerial thermal
+├── models/pretrained/           # 6 trained models
+└── runs/                        # Training outputs
 ```
 
 ---
 
-## 📝 FOR COLLABORATORS
+## 🤖 MODEL INVENTORY
 
-### After Cloning from GitHub:
-1. Clone the repo (small, ~20 MB)
-2. Download training data separately (if needed)
-3. Create symlink to data folder
-4. Install requirements: `pip install -r requirements.txt`
-5. Run demo: `run_demo.bat`
-
-### Data Download (if needed):
-Training data is NOT included in GitHub repo.
-- Download from Kaggle/HuggingFace
-- Or contact project maintainer for data access
+| Model | Accuracy | Size | Pi-Ready? |
+|-------|----------|------|-----------|
+| **yolov10_fire_smoke.pt** | **85% mAP** ⭐ | 61 MB | ❌ |
+| **yolov5s_dfire.pt** | **80% mAP** | 14 MB | ✅ |
+| **dfire_trained_72pct.pt** | **72% mAP** | 5.9 MB | ✅ |
+| yolov10n_forest_fire.pt | Good | 5.5 MB | ✅ |
+| yolov8s_forest_fire.pt | Good | 22 MB | ⚠️ |
+| yolov8n.pt | Base | 6.2 MB | ✅ |
 
 ---
 
-## 💾 STORAGE SUMMARY
+## 🔧 CONFIGURATION SYSTEM
 
-| Location | Size | Contents |
-|----------|------|----------|
-| Project swarm/ | **19.8 MB** | Code, docs, base model |
-| fire-drone-data/ | **141 GB** | Datasets, trained models |
-| **GitHub Upload** | **~15 MB** | After .gitignore |
+### For Collaborators:
+1. Clone the repo
+2. Copy `app/config_local.example.py` → `app/config_local.py`
+3. Edit your data paths
+4. Or create symlink: `New-Item -ItemType Junction -Path ".\data" -Target "<YOUR_DATA_PATH>"`
+
+### Verify Setup:
+```powershell
+cd app
+py config.py  # Shows all paths and models
+```
+
+---
+
+## 📋 WORKFLOW: Plan → Execute Patrol
+
+### Step 1: Plan Mission
+1. Open Mission Planner (http://localhost:8507)
+2. Draw search area on map
+3. Adjust grid settings (altitude, spacing)
+4. Click "Save Mission"
+
+### Step 2: Execute Mission
+1. Open Fleet Control (http://localhost:8506)
+2. Click "Connect All Drones"
+3. Select mission from dropdown
+4. Click "Load Mission"
+5. Click "🚀 EXECUTE MISSION"
+6. Watch drones fly the patrol pattern!
+
+---
+
+## 🎯 PHASE STATUS
+
+| Phase | Status | Details |
+|-------|--------|---------|
+| Phase 0 | ✅ **COMPLETE** | Software validation done |
+| Phase 1A | ⏳ Ready | Hardware desk test (€598) |
+| Phase 1B | ⏳ Waiting | First drone build |
+| Phase 2 | ⏳ Waiting | 5-drone fleet |
+| Phase 3 | ⏳ Waiting | Forest deployment |
+
+---
+
+## 📦 DEPENDENCIES
+
+```
+streamlit>=1.28.0
+ultralytics>=8.0.0
+pymavlink>=2.4.0
+dronekit-sitl>=3.3.0
+pydeck>=0.8.0
+folium>=0.14.0
+opencv-python>=4.8.0
+shapely>=2.0.0
+streamlit-folium>=0.15.0
+```
+
+---
+
+## 🔗 GITHUB REPOSITORY
+
+**URL:** https://github.com/samer-buraei/Project-swarm
+
+- ✅ Clean of personal data
+- ✅ Config system for private paths
+- ✅ ~8 MB (GitHub-friendly)
 
 ---
 

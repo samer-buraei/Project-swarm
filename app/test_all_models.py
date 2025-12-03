@@ -24,7 +24,7 @@ search_paths = [
 
 print("\n📦 Searching for models...")
 for pattern in search_paths:
-    for path in glob.glob(pattern, recursive=True):
+    for path in glob.glob(str(pattern), recursive=True):
         size_mb = os.path.getsize(path) / (1024 * 1024)
         models_found.append((path, size_mb))
         print(f"  ✓ Found: {path} ({size_mb:.1f} MB)")

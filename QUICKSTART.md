@@ -1,111 +1,177 @@
-# 🚀 FIRE DETECTION SYSTEM - QUICK START GUIDE
+# 🚀 FIRE DRONE SWARM - QUICKSTART
 
-## Current Status: ✅ PRETRAINED MODEL READY + Training in Progress
+**Get the system running in 5 minutes.**
 
 ---
 
-## 🔥 IMMEDIATE TESTING OPTIONS
+## Prerequisites
 
-### Option 1: Test with 85% mAP Pretrained Model (BEST)
-```bash
-py fire_detector_unified.py --model models/pretrained/yolov10_fire_smoke.pt --mode thermal
+```powershell
+# Install Python dependencies
+pip install -r requirements.txt
+
+# First-time SITL setup (downloads ArduPilot firmware ~100MB)
+pip install dronekit-sitl
 ```
 
-### Option 2: Test with Thermal Simulation
-```bash
-py fire_detector_unified.py --mode thermal
+---
+
+## Launch the System (3 Terminals)
+
+### Terminal 1: Start 5 Simulated Drones
+```powershell
+cd app
+py launch_fleet.py
+```
+Wait for: `"All 5 SITL instances ready!"`
+
+### Terminal 2: Fleet Control Dashboard
+```powershell
+cd app
+streamlit run dashboard_fleet_real.py --server.port 8506
+```
+
+### Terminal 3: Mission Planner (Optional)
+```powershell
+cd app
+streamlit run dashboard_mission.py --server.port 8507
+```
+
+---
+
+## Open Dashboards
+
+| Dashboard | URL | Purpose |
+|-----------|-----|---------|
+| **Fleet Control** | http://localhost:8506 | Control drones, execute missions |
+| **Mission Planner** | http://localhost:8507 | Draw patrol areas, generate grids |
+
+---
+
+## Quick Workflow
+
+### 1. Plan a Mission
+1. Open Mission Planner (port 8507)
+2. Draw a search area on the map
+3. Set altitude and grid spacing
+4. Click "Save Mission"
+
+### 2. Execute Mission
+1. Open Fleet Control (port 8506)
+2. Click **"Connect All Drones"**
+3. Select your mission from dropdown
+4. Click **"Load Mission"**
+5. Click **"🚀 EXECUTE MISSION"**
+6. Watch drones fly the patrol pattern!
+
+---
+
+## Fire Detection Testing
+
+### Test with Best Model (85% mAP)
+```powershell
+cd app
+py fire_detector_unified.py --model data/models/pretrained/yolov10_fire_smoke.pt --mode thermal
+```
+
+### Compare All Models
+```powershell
+cd app
+py test_all_models.py
+```
+
+### Test Thermal Simulation
+```powershell
+cd app
+py thermal_simulation.py
 ```
 
 **Controls:**
 - `Q` - Quit
 - `M` - Cycle mode (RGB → Thermal → Dual)
 - `T` - Change thermal colormap
-- `C` - Adjust confidence threshold
 - `S` - Save screenshot
 
-### Option 2: Run Drone Simulation with Thermal
-```bash
-py simulation.py --thermal --thermal_mode inferno
+---
+
+## Verify Configuration
+
+```powershell
+cd app
+py config.py
 ```
 
-**Controls:**
-- `F` - Trigger manual fire alert
-- `T` - Toggle thermal mode
-- `M` - Cycle thermal colormap
-- `Q` - Quit
-
-### Option 3: Demo Thermal Colormaps
-```bash
-py thermal_simulation.py
-```
+This shows:
+- Project root path
+- Data directory path
+- Available models (✅ or ❌)
+- Available datasets
 
 ---
 
-## 📊 CHECK TRAINING STATUS
+## Configuration (Optional)
 
-```bash
-py check_training_status.py
+### Method 1: Symlink (Recommended)
+```powershell
+# Run as Admin
+New-Item -ItemType Junction -Path ".\data" -Target "<YOUR_DATA_PATH>\fire-drone-data"
 ```
 
-Or watch the training terminal directly (Epoch 4/20, ~69% complete).
+### Method 2: Private Config File
+```powershell
+# Copy template
+copy app\config_local.example.py app\config_local.py
 
----
-
-## 📥 NEXT STEPS
-
-### 1. Wait for Training to Complete (~15-20 min)
-Training is running in background. When done, model will be at:
-`runs/train/fire_yolov8n/weights/best.pt`
-
-### 2. Download FLAME Dataset (for thermal training)
-```bash
-py setup_flame_dataset.py
+# Edit with your paths
+notepad app\config_local.py
 ```
-Follow the manual download instructions, then run again to organize.
 
-### 3. Train on FLAME (after download)
-```bash
-py train_flame_thermal.py
+Example `config_local.py`:
+```python
+from pathlib import Path
+DATA_PATH = Path("D:/my_fire_data")
 ```
 
 ---
 
-## 📁 KEY FILES
+## Available Models
 
-| File | Purpose |
-|------|---------|
-| `fire_detector_unified.py` | Main detection system (RGB/Thermal/Dual) |
-| `thermal_simulation.py` | Thermal vision simulation module |
-| `simulation.py` | Drone simulation with thermal support |
-| `setup_flame_dataset.py` | FLAME dataset download helper |
-| `train_flame_thermal.py` | Train on thermal data (after FLAME download) |
-| `check_training_status.py` | Check D-Fire training progress |
+| Model | Accuracy | Size | Pi-Ready |
+|-------|----------|------|----------|
+| **yolov10_fire_smoke.pt** | **85%** ⭐ | 61 MB | ❌ |
+| **yolov5s_dfire.pt** | **80%** | 14 MB | ✅ |
+| **dfire_trained_72pct.pt** | **72%** | 5.9 MB | ✅ |
+| yolov10n_forest_fire.pt | Good | 5.5 MB | ✅ |
 
 ---
 
-## 🎯 THERMAL MODE COLORMAPS
+## Troubleshooting
 
-| Mode | Description |
-|------|-------------|
-| `white_hot` | White = hot (most common thermal) |
-| `black_hot` | Black = hot (inverted) |
-| `inferno` | Orange/yellow thermal (recommended) |
-| `jet` | Rainbow thermal |
-| `hot` | Black-red-yellow-white |
+### Drones Not Connecting?
+```powershell
+# First-time SITL downloads firmware (~100MB)
+# Wait 30-60 seconds after starting launch_fleet.py
+```
+
+### Port Already in Use?
+```powershell
+taskkill /F /IM streamlit.exe
+```
+
+### Models Not Found?
+```powershell
+cd app
+py config.py  # Check paths
+```
 
 ---
 
-## ⚠️ KNOWN ISSUES
+## Need More Help?
 
-1. **D-Fire Dataset = RGB ground-level images** - NOT thermal/drone footage
-2. **Need FLAME dataset** for proper thermal/aerial training
-3. **Small flames (lighters)** may not detect with current model
+- **Full Documentation:** `docs/PROJECT_STATE.md`
+- **Developer Guide:** `docs/DEVELOPER_GUIDE.md`
+- **Live Status:** `LIVE_PROGRESS.md`
 
 ---
 
-## 📞 NEED HELP?
-
-- Check `docs/SESSION_SUMMARY_20251130.md` for full session details
-- Check `CHAT_CONTEXT.md` for discussion history
-- Check `LIVE_PROGRESS.md` for current status
-
+**Ready to fly! 🚁**

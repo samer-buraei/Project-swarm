@@ -5,7 +5,7 @@
 [![Phase](https://img.shields.io/badge/Phase-0%20Complete-green)]()
 [![Drones](https://img.shields.io/badge/Simulated%20Drones-5-blue)]()
 [![Detection](https://img.shields.io/badge/Detection-YOLOv8-orange)]()
-[![Model](https://img.shields.io/badge/Model%20Accuracy-72%25%20mAP-brightgreen)]()
+[![Best Model](https://img.shields.io/badge/Best%20Model-85%25%20mAP-brightgreen)]()
 
 ---
 
@@ -14,137 +14,157 @@
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
+pip install dronekit-sitl  # First-time: downloads ArduPilot firmware
 ```
 
-### 2. Launch 5 Simulated Drones
+### 2. Launch 5 Simulated Drones (Terminal 1)
 ```bash
 cd app
 python launch_fleet.py
+# Wait for "All 5 SITL instances ready!"
 ```
 
-### 3. Start Fleet Control Dashboard
+### 3. Start Fleet Control Dashboard (Terminal 2)
 ```bash
 cd app
 streamlit run dashboard_fleet_real.py --server.port 8506
 ```
 
-### 4. Open Browser
-```
-http://localhost:8506
+### 4. Start Mission Planner (Terminal 3, Optional)
+```bash
+cd app
+streamlit run dashboard_mission.py --server.port 8507
 ```
 
-### 5. Click "Connect All Drones" → Control your fleet! 🎮
+### 5. Open Dashboards
+- **Fleet Control:** http://localhost:8506
+- **Mission Planner:** http://localhost:8507
+
+### 6. Connect & Fly! 🎮
+1. Click **"Connect All Drones"**
+2. Click **"TAKEOFF ALL"**
+3. Watch your fleet take off!
 
 ---
 
-## 📸 Screenshots
+## 🗺️ Mission Planning & Execution
 
-### Fleet Control Dashboard
-- 5 drones connected via MAVLink
-- Real-time telemetry (altitude, heading, speed)
-- Fleet commands (ARM ALL, TAKEOFF ALL, RTL ALL)
-- Individual drone control
-- 3D map with flight trails
+### Plan a Patrol
+1. Open **Mission Planner** (http://localhost:8507)
+2. Draw a search area on the map
+3. Set altitude (e.g., 50m) and grid spacing (e.g., 25m)
+4. Click **"Save Mission"**
 
----
-
-## 🗂️ Project Structure
-
-```
-fire-drone-swarm/                # GitHub Repo (~20 MB)
-├── app/                         # Core application code
-│   ├── simulation.py            # Drone simulation
-│   ├── dashboard.py             # Main dashboard
-│   ├── dashboard_fleet_real.py  # Fleet control UI
-│   ├── fire_detector_unified.py # Fire detection
-│   ├── drone_control.py         # MAVLink controller
-│   ├── launch_fleet.py          # Start 5 SITL drones
-│   └── ... (50+ scripts)
-│
-├── docs/                        # Documentation (24 files)
-│   ├── PROJECT_STATE.md         # Current status
-│   ├── SYSTEM_ARCHITECTURE.md   # Technical design
-│   └── ...
-│
-├── scripts/                     # Utility scripts
-│   ├── train_fire_model.py
-│   ├── export_model.py
-│   └── ...
-│
-├── models/                      # Base model only
-│   └── yolov8n.pt              # 6 MB base model
-│
-├── P2Pro-Viewer/               # Thermal camera driver
-│
-├── .gitignore
-├── README.md
-├── requirements.txt
-└── QUICKSTART.md
-
-fire-drone-data/                 # Local Only (~141 GB) - NOT on GitHub
-├── datasets/                    # Training datasets
-│   ├── Combined/               # D-Fire (21K images)
-│   ├── Kaggle_Combined/        # Kaggle (221K images)
-│   └── FLAME/                  # Aerial thermal (pending)
-├── models/
-│   └── pretrained/             # Trained models (6 models, 85% mAP best)
-└── runs/                       # Training outputs
-```
+### Execute the Mission
+1. Open **Fleet Control** (http://localhost:8506)
+2. Click **"Connect All Drones"**
+3. Select mission from dropdown → Click **"Load Mission"**
+4. Click **"🚀 EXECUTE MISSION"**
+5. Watch drones fly the patrol pattern!
 
 ---
 
 ## 🎯 Features
 
 ### Multi-Drone Fleet Control
-- Connect and control 5 drones simultaneously
-- Real MAVLink communication (same as real hardware)
-- ARM / TAKEOFF / RTL / GOTO commands
-- Individual or fleet-wide control
+- ✅ Connect and control 5 drones simultaneously
+- ✅ Real MAVLink communication (same as real hardware)
+- ✅ ARM / TAKEOFF / RTL / GOTO / LAND commands
+- ✅ Individual or fleet-wide control
+- ✅ 3D map with altitude columns and flight trails
 
-### Patrol Patterns
-- Grid sweep
-- Perimeter patrol
-- Spiral search
-- Sector coverage
-- Lawnmower pattern
+### Mission Planning
+- ✅ Draw search areas (rectangle or polygon)
+- ✅ Auto-generate grid waypoints
+- ✅ Configure altitude, spacing, angle
+- ✅ Export missions to JSON
+- ✅ Load & execute in Fleet Control
 
 ### Fire Detection
-- YOLOv8 neural network
-- 18.9ms inference time (PC)
-- ~7 FPS on Raspberry Pi 4 (simulated)
-- Thermal camera ready
+- ✅ 6 pretrained YOLO models (best: 85% mAP)
+- ✅ Thermal camera simulation
+- ✅ RGB + Thermal + Dual modes
+- ✅ ~756ms inference on Raspberry Pi 4
 
-### Visualization
-- 3D PyDeck maps
-- Real-time flight trails
-- Drone altitude columns
-- Fire alert markers
+---
+
+## 🗂️ Project Structure
+
+```
+Project swarm/                    # GitHub Repo (~8 MB)
+├── app/                          # Core application code
+│   ├── launch_fleet.py           # 🚁 Start 5 SITL drones
+│   ├── dashboard_fleet_real.py   # 🎮 Fleet Control UI
+│   ├── dashboard_mission.py      # 🗺️ Mission Planner
+│   ├── fire_detector_unified.py  # 🔥 Fire detection
+│   ├── config.py                 # ⚙️ Path configuration
+│   └── ... (50+ scripts)
+│
+├── docs/                         # Documentation
+│   ├── PROJECT_STATE.md          # 📖 Full system overview
+│   └── ...
+│
+├── models/                       # Base model only
+│   └── yolov8n.pt
+│
+├── P2Pro-Viewer/                # Thermal camera driver
+├── .gitignore
+├── README.md
+└── requirements.txt
+
+fire-drone-data/                  # Local Only (~141 GB)
+├── datasets/                     # Training data
+├── models/pretrained/           # 6 fire detection models
+└── runs/                        # Training outputs
+```
+
+---
+
+## 🔥 Fire Detection Models
+
+| Model | Accuracy | Size | Pi-Ready |
+|-------|----------|------|----------|
+| **yolov10_fire_smoke.pt** | **85% mAP** ⭐ | 61 MB | ❌ |
+| **yolov5s_dfire.pt** | **80% mAP** | 14 MB | ✅ |
+| **dfire_trained_72pct.pt** | **72% mAP** | 5.9 MB | ✅ |
+| yolov10n_forest_fire.pt | Good | 5.5 MB | ✅ |
+
+### Test Fire Detection
+```bash
+cd app
+python fire_detector_unified.py --mode thermal
+python test_all_models.py  # Compare all models
+```
 
 ---
 
 ## ⚙️ Configuration
 
-### Change Location (Belgrade → Your Area)
-```python
-# In dashboard_fleet_real.py (line 58):
-BASE_LAT = 44.8125  # Your latitude
-BASE_LON = 20.4612  # Your longitude
+### Option 1: Symlink (Recommended)
+```powershell
+# Run as Admin - creates symlink to your data folder
+New-Item -ItemType Junction -Path ".\data" -Target "<YOUR_PATH>\fire-drone-data"
 ```
 
-### Change Number of Drones
-```python
-# In launch_fleet.py and dashboard_fleet_real.py:
-DRONES = [
-    {"id": "D1", "port": 5760, "lat": 44.8125, "lon": 20.4612},
-    # Add more drones here...
-]
+### Option 2: Private Config File
+```powershell
+# Copy template
+copy app\config_local.example.py app\config_local.py
+
+# Edit with your paths
+notepad app\config_local.py
 ```
 
-### Change Takeoff Altitude
+In `config_local.py`:
 ```python
-# In dashboard_fleet_real.py, send_command():
-elif cmd == "TAKEOFF":
-    alt = kwargs.get('alt', 50)  # Change 50 to desired altitude
+from pathlib import Path
+DATA_PATH = Path("D:/my_fire_data")
+```
+
+### Verify Setup
+```bash
+cd app
+python config.py  # Shows all paths and models
 ```
 
 ---
@@ -153,8 +173,9 @@ elif cmd == "TAKEOFF":
 
 | Port | Service |
 |------|---------|
-| 5760-5800 | SITL Drones (D1-D5) |
-| 8501-8506 | Streamlit Dashboards |
+| 5760-5764 | SITL Drones (A1-A5) |
+| 8506 | Fleet Control Dashboard |
+| 8507 | Mission Planner |
 
 ---
 
@@ -163,7 +184,7 @@ elif cmd == "TAKEOFF":
 - Python 3.10+
 - Windows/Linux/Mac
 - ~2GB RAM
-- No GPU required (CPU inference)
+- No GPU required
 
 ### Key Dependencies
 ```
@@ -174,94 +195,59 @@ dronekit-sitl>=3.3.0
 pydeck>=0.8.0
 folium>=0.14.0
 opencv-python>=4.8.0
+shapely>=2.0.0
+streamlit-folium>=0.15.0
 ```
 
 ---
 
 ## 📈 Performance
 
-| Metric | PC | Raspberry Pi 4 (simulated) |
-|--------|----|-----------------------------|
-| Inference | 18.9ms | ~115ms |
-| FPS | 50+ | 7-8 |
-| Drones | 5 | 5 |
+| Metric | Desktop | Raspberry Pi 4 |
+|--------|---------|----------------|
+| YOLO Inference | 18.9ms | ~756ms |
+| Detection FPS | 50+ | ~1.3 |
+| Drones Supported | 5+ | 5 |
 
 ---
 
 ## 🗺️ Roadmap
 
 - [x] Phase 0: PC Simulation ✅
-- [x] Model Training: D-Fire 72% mAP ✅
-- [x] Pretrained Models: 6 models collected ✅
-- [ ] Phase 1: Hardware Integration
-- [ ] Phase 2: Field Testing
-- [ ] Phase 3: Deployment
-
----
-
-## 🔥 Fire Detection Models
-
-| Model | Accuracy | Size | For |
-|-------|----------|------|-----|
-| yolov10_fire_smoke.pt | **85% mAP** | 61 MB | Desktop |
-| yolov5s_dfire.pt | **80% mAP** | 14 MB | Pi |
-| D-Fire Trained | **72% mAP** | 5.9 MB | Pi |
-| yolov10n_forest_fire.pt | Good | 5.5 MB | Pi |
-
-*Models stored in `fire-drone-data/models/pretrained/` (not in GitHub)*
+- [x] Fleet Control Dashboard ✅
+- [x] Mission Planner ✅
+- [x] Mission Integration ✅
+- [x] Fire Detection Models (85% mAP) ✅
+- [ ] Phase 1A: Hardware Integration (€598)
+- [ ] Phase 1B: First Drone Build
+- [ ] Phase 2: 5-Drone Fleet
+- [ ] Phase 3: Forest Deployment
 
 ---
 
 ## 📚 Documentation
 
-- [System Architecture](docs/SYSTEM_ARCHITECTURE.md)
-- [SITL Setup Guide](docs/SITL_SETUP_GUIDE.md)
-- [Project State](docs/PROJECT_STATE.md)
-- [Progress Review](docs/PROGRESS_REVIEW_20251201.md)
-
----
-
-## 💾 Data & Models (Not on GitHub)
-
-Training data and large models are stored separately (~141 GB).
-
-### Option 1: Symlink (Recommended)
-```powershell
-# Run as Admin - creates symlink to your data folder
-New-Item -ItemType Junction -Path ".\data" -Target "D:\your-path\fire-drone-data"
-```
-
-### Option 2: Config File (Alternative)
-```powershell
-# Copy the example config
-cp app/config_local.example.py app/config_local.py
-
-# Edit with your paths
-notepad app/config_local.py
-```
-
-In `config_local.py`:
-```python
-DATA_PATH = "D:/your-path/fire-drone-data"
-```
-
-### Verify Setup
-```bash
-cd app
-python config.py  # Shows path status
-```
+| Document | Purpose |
+|----------|---------|
+| [PROJECT_STATE.md](docs/PROJECT_STATE.md) | Complete system overview |
+| [QUICKSTART.md](QUICKSTART.md) | Get running fast |
+| [LIVE_PROGRESS.md](LIVE_PROGRESS.md) | Current status |
+| [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Extend the system |
+| [SITL_SETUP_GUIDE.md](docs/SITL_SETUP_GUIDE.md) | Drone simulation |
 
 ---
 
 ## 🤝 Contributing
 
-This is an active development project. See `docs/` for detailed specifications.
-
 ### After Cloning:
 1. `pip install -r requirements.txt`
-2. Download training data separately (if needed)
-3. Link data folder (see above)
+2. `pip install dronekit-sitl`
+3. Link data folder (see Configuration above)
 4. `cd app && python launch_fleet.py`
+5. `streamlit run dashboard_fleet_real.py --server.port 8506`
+
+### For New Agents/Developers:
+Start by reading `docs/PROJECT_STATE.md` - it explains everything.
 
 ---
 
