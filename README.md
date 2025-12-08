@@ -70,6 +70,8 @@ streamlit run dashboard_mission.py --server.port 8507
 - ✅ Connect and control 5 drones simultaneously
 - ✅ Real MAVLink communication (same as real hardware)
 - ✅ ARM / TAKEOFF / RTL / GOTO / LAND commands
+- ✅ **Click-to-Fly:** Click map to send drone to location
+- ✅ **Manual Nudge:** Precise directional control (⬆️⬇️⬅️➡️)
 - ✅ Individual or fleet-wide control
 - ✅ 3D map with altitude columns and flight trails
 

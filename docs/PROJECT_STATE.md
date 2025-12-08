@@ -86,6 +86,7 @@ A **fire detection drone swarm** for early wildfire detection:
 |---------|--------|----------|
 | Fleet simulation (5 SITL drones) | ✅ Working | `app/launch_fleet.py` |
 | Fleet control dashboard | ✅ Working | `app/dashboard_fleet_real.py` |
+| Manual Control (Click-to-Fly) | ✅ Working | Integrated in fleet dashboard |
 | Mission planner (draw areas) | ✅ Working | `app/dashboard_mission.py` |
 | Mission execution | ✅ Working | Integrated in fleet dashboard |
 | Fire detection models | ✅ 6 models ready | `data/models/pretrained/` |
@@ -204,7 +205,9 @@ py config.py  # Shows all paths, models, and datasets
 **Purpose:** Control 5 drones, execute missions, monitor telemetry
 
 **Features:**
-- Real-time drone positions on 3D map
+- Real-time drone positions on interactive map (Folium)
+- **Click-to-Fly:** Click anywhere on map to send drone
+- **Manual Nudge:** Directional buttons for precise control
 - Fleet status: battery, altitude, mode, heading
 - Fleet commands: ARM ALL, TAKEOFF ALL, RTL ALL, DISARM ALL
 - Individual drone control
@@ -213,8 +216,8 @@ py config.py  # Shows all paths, models, and datasets
 
 **Key UI Elements:**
 - Top: Fleet status cards (green=connected, red=offline)
-- Left: 3D map with altitude columns and flight trails
-- Right: Control panel, mission control, event log
+- Left: Interactive map with flight trails
+- Right: Control panel with **Manual Nudge Pad** and mission control
 
 ### Mission Planner (port 8507)
 **Purpose:** Draw patrol areas, generate grid waypoints

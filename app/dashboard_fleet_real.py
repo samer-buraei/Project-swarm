@@ -11,7 +11,8 @@ Then run:
 """
 
 import streamlit as st
-import pydeck as pdk
+import folium
+from streamlit_folium import st_folium
 import pandas as pd
 import time
 import math
@@ -59,16 +60,25 @@ st.markdown("""
     .badge-armed { background: #ff9500; color: black; }
     .badge-flying { background: #00ccff; color: black; }
     .badge-idle { background: #444; color: white; }
+    
+    /* Manual Control Pad */
+    .control-pad {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 5px;
+        max-width: 200px;
+        margin: 0 auto;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Drone configuration
 DRONE_CONFIG = [
-    {"id": "D1", "port": 5760, "color": [255, 107, 107], "name": "Alpha"},
-    {"id": "D2", "port": 5770, "color": [78, 205, 196], "name": "Bravo"},
-    {"id": "D3", "port": 5780, "color": [255, 190, 11], "name": "Charlie"},
-    {"id": "D4", "port": 5790, "color": [131, 56, 236], "name": "Delta"},
-    {"id": "D5", "port": 5800, "color": [0, 255, 136], "name": "Echo"},
+    {"id": "D1", "port": 5760, "color": "red", "name": "Alpha"},
+    {"id": "D2", "port": 5770, "color": "blue", "name": "Bravo"},
+    {"id": "D3", "port": 5780, "color": "orange", "name": "Charlie"},
+    {"id": "D4", "port": 5790, "color": "purple", "name": "Delta"},
+    {"id": "D5", "port": 5800, "color": "green", "name": "Echo"},
 ]
 
 BASE_LAT = 44.8125
@@ -89,15 +99,15 @@ if 'mission_waypoints' not in st.session_state:
     st.session_state.mission_waypoints = []
 if 'mission_executing' not in st.session_state:
     st.session_state.mission_executing = False
-if 'current_waypoint_idx' not in st.session_state:
-    st.session_state.current_waypoint_idx = {}
+if 'last_click' not in st.session_state:
+    st.session_state.last_click = None
 
 @dataclass
 class DroneState:
     id: str
     name: str
     port: int
-    color: List[int]
+    color: str
     lat: float = BASE_LAT
     lon: float = BASE_LON
     alt: float = 0.0
@@ -212,83 +222,6 @@ def send_command(master, cmd: str, **kwargs):
     except:
         return False
 
-# ============== MAP ==============
-
-def create_fleet_map(fleet: Dict[str, DroneState], trails: Dict, waypoints: List = None):
-    """Create map with all drones and mission waypoints"""
-    layers = []
-    
-    # Base
-    base_df = pd.DataFrame([{'lat': BASE_LAT, 'lon': BASE_LON, 'color': [0, 255, 136, 200]}])
-    layers.append(pdk.Layer('ScatterplotLayer', data=base_df,
-        get_position=['lon', 'lat'], get_fill_color='color', get_radius=60))
-    
-    # Mission waypoints
-    if waypoints and len(waypoints) > 0:
-        # Waypoint markers
-        wp_df = pd.DataFrame([{
-            'lat': wp[0], 'lon': wp[1], 
-            'color': [255, 165, 0, 180]  # Orange
-        } for wp in waypoints])
-        layers.append(pdk.Layer('ScatterplotLayer', data=wp_df,
-            get_position=['lon', 'lat'], get_fill_color='color', get_radius=8))
-        
-        # Mission path
-        if len(waypoints) > 1:
-            path = [[wp[1], wp[0]] for wp in waypoints]
-            path_df = pd.DataFrame([{'path': path, 'color': [255, 165, 0, 150]}])
-            layers.append(pdk.Layer('PathLayer', data=path_df,
-                get_path='path', get_color='color', width_scale=3, width_min_pixels=2))
-    
-    # Trails
-    for drone_id, trail in trails.items():
-        if len(trail) > 1 and drone_id in fleet:
-            color = fleet[drone_id].color
-            path = [[p[1], p[0]] for p in trail]
-            trail_df = pd.DataFrame([{'path': path, 'color': color + [120]}])
-            layers.append(pdk.Layer('PathLayer', data=trail_df,
-                get_path='path', get_color='color', width_scale=2, width_min_pixels=2))
-    
-    # Drones
-    for drone_id, drone in fleet.items():
-        if not drone.connected:
-            continue
-        
-        # Column for altitude
-        if drone.alt > 1:
-            drone_df = pd.DataFrame([{
-                'lat': drone.lat, 'lon': drone.lon,
-                'altitude': drone.alt,
-                'color': drone.color + [255]
-            }])
-            layers.append(pdk.Layer('ColumnLayer', data=drone_df,
-                get_position=['lon', 'lat'], get_elevation='altitude',
-                elevation_scale=1, get_fill_color='color', radius=20))
-        
-        # Top marker
-        top_df = pd.DataFrame([{
-            'lat': drone.lat, 'lon': drone.lon,
-            'color': [255, 255, 255, 255]
-        }])
-        layers.append(pdk.Layer('ScatterplotLayer', data=top_df,
-            get_position=['lon', 'lat'], get_fill_color='color', get_radius=15))
-    
-    # Center on fleet
-    if fleet:
-        connected = [d for d in fleet.values() if d.connected]
-        if connected:
-            avg_lat = sum(d.lat for d in connected) / len(connected)
-            avg_lon = sum(d.lon for d in connected) / len(connected)
-        else:
-            avg_lat, avg_lon = BASE_LAT, BASE_LON
-    else:
-        avg_lat, avg_lon = BASE_LAT, BASE_LON
-    
-    view = pdk.ViewState(latitude=avg_lat, longitude=avg_lon, zoom=15, pitch=50)
-    
-    return pdk.Deck(layers=layers, initial_view_state=view,
-        map_style='https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json')
-
 # ============== UI ==============
 
 st.markdown("# 🔥 FIRE SWARM FLEET CONTROL")
@@ -350,12 +283,10 @@ with col_left:
             status_class = "drone-connected"
             badge = '<span class="status-badge badge-idle">IDLE</span>'
         
-        color_hex = f"rgb({cfg['color'][0]}, {cfg['color'][1]}, {cfg['color'][2]})"
-        
         st.markdown(f"""
         <div class="drone-panel {status_class}">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: {color_hex}; font-weight: bold;">🚁 {drone_id} - {drone.name}</span>
+                <span style="color: {drone.color}; font-weight: bold;">🚁 {drone_id} - {drone.name}</span>
                 {badge}
             </div>
             <div style="font-size: 0.85rem; color: #888; margin-top: 5px;">
@@ -370,14 +301,89 @@ with col_left:
 with col_map:
     st.markdown("### 🗺️ Fleet Map")
     
-    # Create map with mission waypoints
-    fleet_map = create_fleet_map(
-        st.session_state.fleet, 
-        st.session_state.trails,
-        st.session_state.mission_waypoints
-    )
-    st.pydeck_chart(fleet_map, use_container_width=True, height=450)
+    # Initialize Folium Map
+    # Center on fleet or base
+    connected_drones = [d for d in st.session_state.fleet.values() if d.connected]
+    if connected_drones:
+        avg_lat = sum(d.lat for d in connected_drones) / len(connected_drones)
+        avg_lon = sum(d.lon for d in connected_drones) / len(connected_drones)
+    else:
+        avg_lat, avg_lon = BASE_LAT, BASE_LON
+        
+    m = folium.Map(location=[avg_lat, avg_lon], zoom_start=16, tiles="CartoDB dark_matter")
     
+    # Add Base Station
+    folium.Marker(
+        [BASE_LAT, BASE_LON],
+        popup="Base Station",
+        icon=folium.Icon(color="white", icon="home")
+    ).add_to(m)
+    
+    # Add Mission Waypoints
+    if st.session_state.mission_waypoints:
+        for i, wp in enumerate(st.session_state.mission_waypoints):
+            folium.CircleMarker(
+                location=[wp[0], wp[1]],
+                radius=3,
+                color="orange",
+                fill=True
+            ).add_to(m)
+        
+        # Draw path
+        folium.PolyLine(
+            st.session_state.mission_waypoints,
+            color="orange",
+            weight=2,
+            opacity=0.5
+        ).add_to(m)
+
+    # Add Drones and Trails
+    for drone_id, drone in st.session_state.fleet.items():
+        if not drone.connected:
+            continue
+            
+        # Trail
+        trail = list(st.session_state.trails[drone_id])
+        if len(trail) > 1:
+            folium.PolyLine(
+                trail,
+                color=drone.color,
+                weight=2,
+                opacity=0.6
+            ).add_to(m)
+            
+        # Drone Marker
+        folium.Marker(
+            [drone.lat, drone.lon],
+            popup=f"{drone.id} ({drone.alt:.0f}m)",
+            icon=folium.Icon(color=drone.color, icon="plane", prefix="fa")
+        ).add_to(m)
+
+    # Render Map with Click Events
+    map_output = st_folium(m, height=500, width=800)
+    
+    # Handle Click-to-Fly
+    if map_output.get("last_clicked"):
+        click_data = map_output["last_clicked"]
+        clicked_lat = click_data["lat"]
+        clicked_lon = click_data["lng"]
+        
+        # Only trigger if click changed (simple debounce)
+        if st.session_state.last_click != (clicked_lat, clicked_lon):
+            st.session_state.last_click = (clicked_lat, clicked_lon)
+            
+            # Send selected drone to this location
+            target_drone_id = st.session_state.selected_drone
+            if target_drone_id in st.session_state.connections:
+                master = st.session_state.connections[target_drone_id]
+                drone = st.session_state.fleet[target_drone_id]
+                
+                # Command
+                send_command(master, "GOTO", lat=clicked_lat, lon=clicked_lon, alt=max(20, drone.alt))
+                st.toast(f"🚁 Sending {target_drone_id} to {clicked_lat:.5f}, {clicked_lon:.5f}")
+            else:
+                st.toast(f"⚠️ {target_drone_id} not connected!", icon="⚠️")
+
     # Quick fleet commands
     st.markdown("### 🎮 Fleet Commands")
     cmd_cols = st.columns(5)
@@ -417,6 +423,7 @@ with col_right:
     drone_options = [f"{cfg['id']} - {cfg['name']}" for cfg in DRONE_CONFIG]
     selected = st.selectbox("Select Drone", drone_options, label_visibility="collapsed")
     selected_id = selected.split(" - ")[0]
+    st.session_state.selected_drone = selected_id
     
     if selected_id in st.session_state.fleet:
         drone = st.session_state.fleet[selected_id]
@@ -431,6 +438,28 @@ with col_right:
         </div>
         """, unsafe_allow_html=True)
         
+        # Manual Control Pad
+        st.markdown("#### 🕹️ Manual Nudge")
+        
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c2:
+            if st.button("⬆️", key="n_north", use_container_width=True):
+                send_command(master, "GOTO", lat=drone.lat + 0.0002, lon=drone.lon, alt=drone.alt)
+        
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            if st.button("⬅️", key="n_west", use_container_width=True):
+                send_command(master, "GOTO", lat=drone.lat, lon=drone.lon - 0.0002, alt=drone.alt)
+        with c2:
+            if st.button("⬇️", key="n_south", use_container_width=True):
+                send_command(master, "GOTO", lat=drone.lat - 0.0002, lon=drone.lon, alt=drone.alt)
+        with c3:
+            if st.button("➡️", key="n_east", use_container_width=True):
+                send_command(master, "GOTO", lat=drone.lat, lon=drone.lon + 0.0002, alt=drone.alt)
+                
+        st.caption("Nudges drone ~20m in direction")
+        st.markdown("---")
+
         col1, col2 = st.columns(2)
         with col1:
             st.metric("Mode", drone.mode)
@@ -439,12 +468,11 @@ with col_right:
             st.metric("Armed", "✅" if drone.armed else "❌")
             st.metric("Heading", f"{drone.heading:.0f}°")
         
-        st.markdown("---")
         st.markdown("#### Commands")
         
         col1, col2 = st.columns(2)
         with col1:
-            if st.button(f"🔓 ARM {selected_id}", use_container_width=True):
+            if st.button(f"🔓 ARM", use_container_width=True):
                 send_command(master, "ARM")
             if st.button(f"🛫 TAKEOFF", use_container_width=True):
                 send_command(master, "TAKEOFF", alt=50)
@@ -454,12 +482,6 @@ with col_right:
             if st.button(f"🏠 RTL", use_container_width=True):
                 send_command(master, "RTL")
         
-        st.markdown("---")
-        st.markdown("#### Go To")
-        goto_lat = st.number_input("Lat", value=drone.lat + 0.002, format="%.5f", key="goto_lat")
-        goto_lon = st.number_input("Lon", value=drone.lon + 0.002, format="%.5f", key="goto_lon")
-        if st.button(f"🎯 FLY {selected_id} TO TARGET", use_container_width=True, type="primary"):
-            send_command(master, "GOTO", lat=goto_lat, lon=goto_lon, alt=50)
     else:
         st.info(f"Connect {selected_id} first")
     
@@ -528,8 +550,7 @@ with col_right:
                     st.session_state.mission_executing = False
     else:
         st.info("💡 Create a mission in Mission Planner (port 8507)")
-        if st.button("🗺️ Open Mission Planner"):
-            st.markdown("[Open Mission Planner](http://localhost:8507)")
+        st.link_button("🗺️ Open Mission Planner", "http://localhost:8507", use_container_width=True)
 
 # Footer
 st.markdown("---")
@@ -548,6 +569,5 @@ with cols[3]:
 
 # Auto-refresh
 if connected_count > 0:
-    time.sleep(0.3)
+    time.sleep(1)
     st.rerun()
-
