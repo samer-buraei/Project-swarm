@@ -4,46 +4,46 @@ echo           FIRE SWARM DEMO LAUNCHER
 echo ===================================================
 echo.
 
-:: Find Python
-where python >nul 2>nul
+:: Find Python (check for py launcher)
+where py >nul 2>nul
 if %errorlevel% neq 0 (
-    echo ERROR: Python not found in PATH
-    echo Please install Python from python.org
+    echo ERROR: Python Launcher 'py' not found.
+    echo Please install Python from python.org and ensure 'py' is installed.
     pause
     exit /b
 )
 
-echo [1/3] Installing dependencies...
-python -m pip install -r "%~dp0requirements.txt" --quiet
+echo [1/4] Installing dependencies...
+py -m pip install -r "%~dp0requirements.txt" --quiet
 if %errorlevel% neq 0 (
     echo WARNING: Some dependencies may have failed to install.
 )
 echo      Done.
 
 echo.
-echo [2/3] Launching Dashboard (browser)...
-start "Fire Swarm Dashboard" cmd /c "python -m streamlit run dashboard.py --server.headless true"
-
-:: Wait for dashboard to start
-timeout /t 3 /nobreak >nul
+echo [2/4] Launching Fleet Dashboard (browser)...
+start "Fleet Dashboard" cmd /c "cd app && py -m streamlit run dashboard_fleet_real.py --server.port 8506 --server.headless true"
 
 echo.
-echo [3/3] Launching Drone Simulation (camera window)...
+echo [3/4] Launching Mission Planner (browser)...
+start "Mission Planner" cmd /c "cd app && py -m streamlit run dashboard_mission.py --server.port 8507 --server.headless true"
+
+:: Wait for dashboards to start
+timeout /t 5 /nobreak >nul
+
+echo.
+echo [4/4] Launching Drone Fleet Simulation...
 echo.
 echo ===================================================
 echo   CONTROLS:
-echo     Press 'f' = Simulate FIRE detection
-echo     Press 'q' = Quit simulation
-echo.
-echo   The browser dashboard will show:
-echo     - Real-time drone camera feed
-echo     - GPS map with drone position
-echo     - Fire detection alerts
+echo     The fleet simulation will run in this window.
+echo     Open http://localhost:8506 to control the fleet.
+echo     Open http://localhost:8507 to plan missions.
 echo ===================================================
 echo.
 
-:: Run simulation in foreground so user can see output
-python simulation.py
+cd app
+py launch_fleet.py
 
 echo.
 echo Simulation ended. Press any key to close...

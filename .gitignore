@@ -60,6 +60,8 @@ pyvenv.cfg
 # Local config (private paths)
 config_local.py
 app/config_local.py
+config_hardware_local.py
+app/config_hardware_local.py
 
 # -----------------------------------------------------------------------------
 # GENERATED FILES
