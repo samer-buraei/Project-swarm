@@ -54,17 +54,16 @@ BLOCKER 4: Does Streamlit dashboard receive messages?
 
 ---
 
-### **COMMUNICATIONS (LoRa)**
+### **COMMUNICATIONS (4G/LTE)**
 
 | Item | Model | Qty | Cost | Why This One | Link |
 |------|-------|-----|------|--------------|------|
-| **LoRa Module (Drone)** | Heltec ESP32 + LoRa | 1 | €50 | 868MHz EU, built-in LoRa, SPI interface | AliExpress |
-| **LoRa Module (Ground)** | Heltec ESP32 + LoRa | 1 | €50 | Same as drone, for base station | AliExpress |
-| **SMA Antenna** | 868MHz dipole | 2 | €10 | External antenna for range | AliExpress |
-| **USB Serial Cable** | FTDI FT232 | 1 | €8 | Heltec connects to Pi via USB serial | AliExpress |
-| **LoRa Enclosure** | Weatherproof IP67 box | 1 | €20 | Ground station antenna + Heltec protected | Amazon |
+| **4G Dongle** | Huawei E3372h-320 | 1 | €40 | Linux native support (CDC_ETHER) | Amazon |
+| **IoT SIM** | Things Mobile / 1NCE | 1 | €10 | Multi-network roaming, 1GB data | Amazon |
+| **VPN Service** | Tailscale | 1 | €0 | Free tier covers 100 devices | [tailscale.com](https://tailscale.com) |
+| **[BACKUP]** | *Heltec LoRa* | *0* | *€0* | *Moved to Phase 2 (Backup Link)* | - |
 
-**Subtotal LoRa:** €138
+**Subtotal Comms:** €50 ( + ~€5/mo data)
 
 ---
 

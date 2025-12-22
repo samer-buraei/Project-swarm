@@ -38,3 +38,5 @@ MY_NETWORK = {
     "wifi_ssid": "MyDroneNetwork",
 }
 
+
+

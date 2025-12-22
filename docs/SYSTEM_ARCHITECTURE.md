@@ -12,6 +12,7 @@ A complete **multi-drone wildfire detection system** that can be fully tested on
 ### Capabilities
 - ✅ 5 simulated drones with real Pixhawk firmware (SITL)
 - ✅ Real MAVLink communication (same protocol as real hardware)
+- ✅ Hybrid 4G/LTE + LoRa Connectivity Architecture
 - ✅ Fire detection with YOLOv8
 - ✅ Multi-drone fleet control dashboard
 - ✅ Patrol pattern generation
@@ -58,7 +59,7 @@ Project swarm/
 │
 ├── 📁 scripts/
 │   ├── test_fire_detection.py   # Benchmark on D-Fire dataset
-│   ├── simulate_pi4.py          # Pi 4 performance simulation
+│   ├── simulate_pi5.py          # Pi 5 performance simulation
 │   ├── prepare_training_data.py # Dataset preparation
 │   ├── train_fire_model.py      # Model training
 │   ├── export_model.py          # Export to TFLite
@@ -176,13 +177,13 @@ UDP_PORT = 5001
 
 ---
 
-### 5. `scripts/simulate_pi4.py` - Pi 4 Simulator
-**Purpose:** Throttle inference to match Raspberry Pi 4 performance.
+### 5. `scripts/simulate_pi5.py` - Pi 5 Simulator
+**Purpose:** Throttle inference to match Raspberry Pi 5 performance.
 
 ```python
 # Configuration
-THROTTLE_FACTOR = 6.0  # PC is ~6x faster than Pi 4
-TELEMETRY_INTERVAL = 2.0  # Send data every 2 seconds
+THROTTLE_FACTOR = 2.0  # PC is ~2x faster than Pi 5
+TELEMETRY_INTERVAL = 1.0  # Send data every 1 second
 ```
 
 ---
@@ -278,11 +279,12 @@ streamlit run dashboard_fleet_real.py --server.port 8506
 
 ## 📈 What's Next (Phase 1)
 
-1. **Hardware Acquisition**
-   - Raspberry Pi 4 (×5)
+1. **Hardware Acquisition (v2)**
+   - Raspberry Pi 5 (×5)
    - Pixhawk flight controllers (×5)
-   - Thermal cameras (×5)
-   - LoRa radios
+   - InfiRay P2 Pro Thermal cameras (×5)
+   - Sixfab 4G/LTE Modems (x5)
+   - LoRa radios (Backup)
 
 2. **Real Hardware Testing**
    - Flash ArduCopter to Pixhawks
@@ -302,7 +304,7 @@ streamlit run dashboard_fleet_real.py --server.port 8506
 | Test | Status | Result |
 |------|--------|--------|
 | Fire Detection | ✅ | 18.9ms inference |
-| Pi 4 Simulation | ✅ | 7+ FPS validated |
+| Pi 5 Simulation | ✅ | 30+ FPS validated |
 | SITL Connection | ✅ | MAVLink working |
 | Multi-Drone | ✅ | 5 drones controlled |
 | Fleet Commands | ✅ | ARM/TAKEOFF/RTL/GOTO |

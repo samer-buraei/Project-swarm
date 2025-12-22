@@ -1,4 +1,4 @@
-# 🔥 FIRE DETECTION DRONE SWARM - PROJECT STATE
+# 🔥 FIRE DETECTION DRONE SWARM v2 - PROJECT STATE
 
 **Last Updated:** December 3, 2025  
 **Current Phase:** Phase 0 COMPLETE | Phase 1A Ready  
@@ -75,8 +75,9 @@ streamlit run dashboard_mission.py --server.port 8507
 ### Core Capability
 A **fire detection drone swarm** for early wildfire detection:
 - 5 autonomous drones with thermal cameras
-- Real-time YOLO fire detection (on-drone AI, no cloud)
-- LoRa radio communication (offline, 20km range)
+- Real-time YOLO fire detection (on-drone AI)
+- **4G/LTE Connectivity:** Real-time video and control (via Tailscale VPN)
+- **Unlimited Range:** Control from anywhere with cell coverage
 - Human operator orchestration via Streamlit dashboard
 - Draw patrol areas → Auto-generate grid → Execute mission
 
@@ -351,7 +352,8 @@ DRONE_CONFIG = [
 |------|------|
 | Raspberry Pi 4 8GB | €60 |
 | InfiRay P2Pro thermal camera | €250 |
-| Heltec ESP32 LoRa modules ×2 | €100 |
+| Huawei E3372 4G Dongle + SIM | €50 |
+| Tailscale VPN (Software) | €0 |
 | USB Hub, cables, power | €45 |
 | Misc (SD card, etc) | €123 |
 | **TOTAL** | **€598** |
@@ -363,16 +365,18 @@ DRONE_CONFIG = [
 ### System Layers
 ```
 LAYER 1: THE DRONE (Edge AI)
-├─ Hardware: Tarot 650 frame, Pixhawk 6C flight controller
+├─ Hardware: GEPRC Mark4 10", Pixhawk 6C flight controller
 ├─ Sensors: InfiRay P2Pro thermal camera, GPS
-├─ Brain: Raspberry Pi 4 (8GB RAM)
-├─ AI: YOLOv8n fire detection (~756ms on Pi)
-└─ Communication: Heltec ESP32 LoRa module
+├─ Brain: Raspberry Pi 5 (8GB RAM)
+├─ AI: YOLOv8n fire detection (~500ms on Pi 5)
+├─ Connectivity: Sixfab 4G/LTE Modem (Primary) + Heltec LoRa (Backup)
 
 LAYER 2: THE LINK (Offline Communication)
-├─ Protocol: LoRa radio (868 MHz, 20km range)
-├─ Message: "FIRE lat lon temp" (21 bytes)
-└─ Latency: <200ms air time
+LAYER 2: THE LINK (Connected)
+├─ Protocol: 4G/LTE (Huawei Dongle)
+├─ Network: Tailscale VPN (Mesh)
+├─ Latency: ~100-500ms
+└─ Bandwidth: High (Video + Telemetry)
 
 LAYER 3: THE BASE (Human Control)
 ├─ Hardware: Operator laptop + LoRa receiver
@@ -386,19 +390,10 @@ LAYER 4: THE HUMAN (Final Decision)
 └─ Authority: Human always decides, not AI
 ```
 
-### Why Offline Architecture?
-```
-Cloud (REJECTED):
-  ❌ No 4G in remote forests
-  ❌ Latency unacceptable
-  ❌ Cloud costs 24/7
-
-LoRa Offline (CHOSEN):
-  ✅ Works anywhere (no internet)
-  ✅ Low latency (<2 sec)
-  ✅ No cloud cost
-  ✅ Works in forest
-```
+### Hybrid Architecture (CHOSEN v2):
+- **Primary (4G/LTE):** Real-time video streaming, high-bandwidth telemetry
+- **Backup (LoRa):** Critical telemetry and alerts when 4G is lost
+- **Failover:** Automatic switching ensures continuous control
 
 ---
 
@@ -472,7 +467,7 @@ pip install dronekit pymavlink
 4. All fire detection models are in `fire_detector_unified.py`
 
 ### Key Design Decisions
-- **Offline-first:** No cloud, LoRa communication
+- **Connected Architecture:** 4G/LTE + Tailscale VPN
 - **Human-in-loop:** AI suggests, human confirms
 - **Modular:** Each component can be tested independently
 - **Config system:** Private paths via config_local.py
@@ -494,7 +489,7 @@ pip install dronekit pymavlink
 
 - [ ] Order Phase 1A hardware (€598)
 - [ ] Test P2Pro thermal camera on real Pi 4
-- [ ] Test LoRa communication range
+- [ ] Test 4G Connectivity (Tailscale) on Pi 4
 - [ ] Test YOLO inference speed on Pi 4
 - [ ] Build first drone (Phase 1B)
 

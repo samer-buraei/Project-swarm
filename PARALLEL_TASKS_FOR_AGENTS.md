@@ -1,5 +1,11 @@
 # 🚀 PARALLEL TASKS FOR JUNIOR DEV AGENTS
 
+> ⚠️ **DEPRECATED** - This file contains completed Phase 0 tasks.
+> 
+> 👉 **NEW ENGINEERS:** See [**COLLABORATION_GUIDE.md**](COLLABORATION_GUIDE.md) for current expert personas and prompts!
+
+---
+
 **Instructions:** Copy the relevant section to each agent. They can all work simultaneously.
 
 ---
